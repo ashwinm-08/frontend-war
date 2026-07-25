@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Intelligence Investigation Board | Concord IIB</title>
+<meta name="description" content="Modern Investigation Management SaaS — Organize. Connect. Analyze. Uncover the Truth."/>
+
+<!-- PERFORMANCE: Preload fonts to prevent render blocking -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'"/>
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"/></noscript>
+
+<style>
+/* ============================================================
+   CSS CUSTOM PROPERTIES
+============================================================ */
+:root {
+  --c-bg: #060711;
+  --c-surface: #0c0e1a;
+  --c-surface2: #111425;
+  --c-card: #141728;
+  --c-card2: #1a1e34;
+  --c-border: #1e2340;
+  --c-border2: #252b4a;
+  --c-accent: #4f63f7;
+  --c-accent2: #7c3bed;
+  --c-accent-glow: rgba(79,99,247,.18);
+  --c-accent-dim: rgba(79,99,247,.08);
+  --c-green: #22c55e;
+  --c-yellow: #f59e0b;
+  --c-red: #ef4444;
+  --c-cyan: #06b6d4;
+  --c-purple: #a855f7;
+  --c-text: #e2e6f3;
+  --c-text2: #8892b0;
+  --c-text3: #4a5380;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --radius-lg: 20px;
+  --shadow: 0 8px 40px rgba(0,0,0,.5);
+  --shadow-sm: 0 4px 20px rgba(0,0,0,.35);
+  --transition: .2s cubic-bezier(.4,0,.2,1);
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ============================================================
+   RESET & BASE
+============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
+  min-height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--c-border2); border-radius: 9px; }
+::-webkit-scrollbar-thumb:hover { background: var(--c-accent); }
+
+button, input, select, textarea { font-family: inherit; }
+button { cursor: pointer; }
+svg { display: block; }
+
+/* ============================================================
+   LAYOUT
+============================================================ */
+.layout { display: flex; height: 100vh; }
+
+/* ============================================================
+   SIDEBAR
+============================================================ */
+.sidebar {
+  width: 64px;
+  background: var(--c-surface);
+  border-right: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  gap: 2px;
+  flex-shrink: 0;
+  z-index: 50;
+  transition: width var(--transition);
+  overflow: hidden;
+  will-change: width; /* PERFORMANCE: Optimize width transitions */
+  contain: layout paint; /* PERFORMANCE: Containment */
+}
+.sidebar.expanded { width: 220px; }
+
+.sb-logo {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--c-accent), var(--c-accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 0 20px var(--c-accent-glow);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: box-shadow var(--transition);
+}
+.sb-logo:hover { box-shadow: 0 0 30px rgba(79,99,247,.4); }
+
+.sb-nav-item {
+  width: calc(100% - 12px);
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  cursor: pointer;
+  color: var(--c-text3);
+  transition: all var(--transition);
+  white-space: nowrap;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  position: relative;
+}
+.sb-nav-item:hover { background: var(--c-accent-dim); color: var(--c-text); }
+.sb-nav-item.active { background: var(--c-accent-glow); color: var(--c-accent); }
+.sb-nav-item .nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.sb-nav-item .nav-label { opacity: 0; transition: opacity var(--transition); }
+.sidebar.expanded .nav-label { opacity: 1; }
+.sb-nav-item .nav-badge {
+  margin-left: auto;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.sidebar.expanded .nav-badge { opacity: 1; }
+.sb-divider { width: calc(100% - 24px); height: 1px; background: var(--c-border); margin: 8px 0; flex-shrink: 0; }
+.sb-toggle {
+  margin-top: auto;
+  width: calc(100% - 12px);
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: 1px solid var(--c-border);
+  color: var(--c-text3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 12px;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.sb-toggle:hover { background: var(--c-accent-dim); color: var(--c-text); border-color: var(--c-accent); }
+.sb-toggle .toggle-text { opacity: 0; transition: opacity var(--transition); }
+.sidebar.expanded .toggle-text { opacity: 1; }
+
+/* ============================================================
+   MAIN AREA
+============================================================ */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* TOP BAR */
+.topbar {
+  height: 56px;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  flex-shrink: 0;
+  contain: layout paint; /* PERFORMANCE: Containment */
+}
+.topbar-brand { font-size: 16px; font-weight: 800; letter-spacing: -.3px; white-space: nowrap; }
+.topbar-brand span { background: linear-gradient(135deg, var(--c-accent), var(--c-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.topbar-search {
+  flex: 1;
+  max-width: 380px;
+  margin-left: 16px;
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  transition: border-color var(--transition);
+  position: relative;
+}
+.topbar-search:focus-within { border-color: var(--c-accent); }
+.topbar-search svg { color: var(--c-text3); flex-shrink: 0; }
+.topbar-search input { background: none; border: none; outline: none; color: var(--c-text); font-size: 13px; flex: 1; min-width: 0; }
+.topbar-search input::placeholder { color: var(--c-text3); }
+.topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.case-badge { font-size: 11px; color: var(--c-text3); background: var(--c-card); border: 1px solid var(--c-border); padding: 4px 12px; border-radius: 99px; font-family: var(--font-mono); }
+.notif-btn {
+  width: 34px; height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  color: var(--c-text2);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  transition: all var(--transition);
+}
+.notif-btn:hover { border-color: var(--c-accent); color: var(--c-accent); }
+.notif-dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; background: var(--c-red); border-radius: 50%; border: 2px solid var(--c-surface); }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #ef4444); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), background var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+.btn-primary { background: linear-gradient(135deg, var(--c-accent), var(--c-accent2)); color: #fff; box-shadow: 0 4px 16px var(--c-accent-glow); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(79,99,247,.4); }
+.btn-secondary { background: var(--c-card2); border: 1px solid var(--c-border2); color: var(--c-text2); }
+.btn-secondary:hover { background: var(--c-card); border-color: var(--c-accent); color: var(--c-text); }
+.btn-ghost { background: transparent; border: 1px solid var(--c-border); color: var(--c-text3); }
+.btn-ghost:hover { background: var(--c-accent-dim); border-color: var(--c-accent); color: var(--c-text); }
+.btn-sm { padding: 5px 10px; font-size: 11.5px; }
+
+/* ============================================================
+   VIEWS & CONTENT AREA
+============================================================ */
+.content-area { 
+  flex: 1; 
+  overflow-y: auto; 
+  padding: 20px; 
+  contain: layout style paint; /* PERFORMANCE: Containment restricts browser reflow calculations */
+}
+.view { display: none; }
+.view.active { display: block; animation: fadeInUp .3s ease; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* SECTION HEADER */
+.section-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.section-title { font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
+.section-subtitle { font-size: 13px; color: var(--c-text3); margin-top: 3px; }
+.section-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* CARDS */
+.card { background: var(--c-card); border: 1px solid var(--c-border); border-radius: var(--radius); padding: 20px; transition: border-color var(--transition); }
+.card:hover { border-color: var(--c-border2); }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.card-title { font-size: 13.5px; font-weight: 700; }
+.card-subtitle { font-size: 11.5px; color: var(--c-text3); margin-top: 2px; }
+
+/* BADGES / CHIPS */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 10.5px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; }
+.badge-person { background: rgba(96,165,250,.15); color: #60a5fa; border: 1px solid rgba(96,165,250,.25); }
+.badge-document { background: rgba(167,139,250,.15); color: #a78bfa; border: 1px solid rgba(167,139,250,.25); }
+.badge-location { background: rgba(251,191,36,.15); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
+.badge-evidence { background: rgba(52,211,153,.15); color: #34d399; border: 1px solid rgba(52,211,153,.25); }
+.badge-media { background: rgba(6,182,212,.15); color: #22d3ee; border: 1px solid rgba(6,182,212,.25); }
+.badge-event { background: rgba(251,113,133,.15); color: #fb7185; border: 1px solid rgba(251,113,133,.25); }
+.priority-badge-high { background: rgba(239,68,68,.15); color: #f87171; border: 1px solid rgba(239,68,68,.25); }
+.priority-badge-medium { background: rgba(245,158,11,.15); color: #fbbf24; border: 1px solid rgba(245,158,11,.25); }
+.priority-badge-low { background: rgba(34,197,94,.15); color: #4ade80; border: 1px solid rgba(34,197,94,.25); }
+.status-open { background: rgba(79,99,247,.15); color: #818cf8; border: 1px solid rgba(79,99,247,.25); }
+.status-active { background: rgba(34,197,94,.15); color: #4ade80; border: 1px solid rgba(34,197,94,.25); }
+.status-review { background: rgba(245,158,11,.15); color: #fbbf24; border: 1px solid rgba(245,158,11,.25); }
+.status-closed { background: rgba(107,114,128,.15); color: #9ca3af; border: 1px solid rgba(107,114,128,.25); }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; border: 1px solid var(--c-border); background: var(--c-card2); color: var(--c-text3); cursor: pointer; transition: all var(--transition); }
+.chip:hover { border-color: var(--c-accent); color: var(--c-text); }
+.chip.active { background: var(--c-accent-glow); border-color: var(--c-accent); color: var(--c-accent); }
+
+/* ============================================================
+   DASHBOARD VIEW
+============================================================ */
+.dash-hero { background: linear-gradient(135deg, rgba(79,99,247,.12) 0%, rgba(124,59,237,.08) 50%, rgba(6,182,212,.06) 100%); border: 1px solid var(--c-border2); border-radius: var(--radius-lg); padding: 24px 28px; margin-bottom: 20px; position: relative; overflow: hidden; contain: layout paint; }
+.dash-hero::before { content: ''; position: absolute; top: -50px; right: -50px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(79,99,247,.2) 0%, transparent 70%); pointer-events: none; }
+.hero-content { position: relative; z-index: 1; }
+.hero-title { font-size: 26px; font-weight: 900; letter-spacing: -.5px; line-height: 1.2; }
+.hero-title .accent { background: linear-gradient(90deg, var(--c-accent), var(--c-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero-subtitle { font-size: 13.5px; color: var(--c-text3); margin-top: 6px; }
+.hero-meta { display: flex; align-items: center; gap: 20px; margin-top: 18px; }
+.hero-stat { text-align: center; }
+.hero-stat-val { font-size: 32px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+.hero-stat-label { font-size: 10px; color: var(--c-text3); text-transform: uppercase; letter-spacing: .6px; margin-top: 3px; }
+.hero-stat-divider { width: 1px; height: 40px; background: var(--c-border2); }
+
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+@media (max-width: 1200px) { .grid-4 { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 768px) { .grid-4, .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+.stat-card { background: var(--c-card); border: 1px solid var(--c-border); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 6px; position: relative; overflow: hidden; contain: layout paint; }
+.stat-card:hover { border-color: var(--c-accent); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,99,247,.15); }
+.stat-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+.stat-number { font-size: 28px; font-weight: 900; letter-spacing: -1px; line-height: 1.1; margin-top: 4px; }
+.stat-name { font-size: 11.5px; color: var(--c-text3); font-weight: 500; }
+.stat-change { font-size: 11px; display: flex; align-items: center; gap: 3px; margin-top: 2px; }
+.stat-change.up { color: var(--c-green); }
+.stat-change.down { color: var(--c-red); }
+
+/* Progress Ring & Activity */
+.ring-wrap { display: flex; align-items: center; gap: 24px; }
+.ring-container { position: relative; width: 108px; height: 108px; flex-shrink: 0; }
+.ring-container svg { transform: rotate(-90deg); }
+circle.ring-bg { fill: none; stroke: rgba(255,255,255,.06); stroke-width: 10; }
+circle.ring-fill { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+.ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-pct { font-size: 22px; font-weight: 900; line-height: 1; }
+.ring-sub { font-size: 9px; color: var(--c-text3); text-transform: uppercase; letter-spacing: .5px; }
+.ring-legend { display: flex; flex-direction: column; gap: 10px; }
+.legend-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.legend-pct { margin-left: auto; font-weight: 700; padding-left: 16px; }
+
+.activity-feed { display: flex; flex-direction: column; }
+.activity-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.activity-item:last-child { border: none; }
+.activity-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.activity-text { font-size: 12.5px; line-height: 1.5; }
+.activity-time { font-size: 11px; color: var(--c-text3); margin-top: 1px; }
+
+/* Charts & Tasks */
+.bar-chart-wrap { display: flex; align-items: flex-end; gap: 5px; height: 72px; }
+.bar-col { flex: 1; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, var(--c-accent), var(--c-accent2)); transition: filter var(--transition); min-width: 8px; }
+.bar-col:hover { filter: brightness(1.25); }
+.bar-labels { display: flex; gap: 5px; margin-top: 6px; }
+.bar-label { flex: 1; text-align: center; font-size: 9px; color: var(--c-text3); }
+
+.donut-wrap { display: flex; align-items: center; gap: 18px; }
+.donut-legend { display: flex; flex-direction: column; gap: 7px; flex: 1; }
+.donut-legend-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+.donut-legend-left { display: flex; align-items: center; gap: 7px; }
+.donut-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.task-item { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.task-item:last-child { border: none; }
+.task-check { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--c-border2); cursor: pointer; flex-shrink: 0; accent-color: var(--c-accent); }
+.task-text { flex: 1; font-size: 12px; }
+.task-text.done { text-decoration: line-through; color: var(--c-text3); }
+
+/* ============================================================
+   EVIDENCE BOARD VIEW
+============================================================ */
+.board-filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.board-canvas {
+  position: relative;
+  width: 100%;
+  height: 640px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-image: linear-gradient(rgba(79,99,247,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(79,99,247,.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  contain: layout paint; /* PERFORMANCE: Containment */
+}
+
+#conn-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.ev-card {
+  position: absolute;
+  width: 196px;
+  background: var(--c-card2);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  cursor: grab;
+  user-select: none;
+  z-index: 1;
+  will-change: transform; /* PERFORMANCE: GPU Acceleration for dragging */
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+.ev-card:hover { box-shadow: var(--shadow); border-color: var(--c-border2); }
+.ev-card.dragging { cursor: grabbing; z-index: 100; box-shadow: 0 20px 60px rgba(0,0,0,.7); border-color: var(--c-accent); transition: none; /* PERFORMANCE: Remove transition while dragging */ }
+.ev-card.connect-from { border-color: var(--c-accent); box-shadow: 0 0 0 3px var(--c-accent-glow); }
+.ev-card.connect-mode:not(.connect-from) { cursor: crosshair; }
+
+.ev-card-header { padding: 10px 12px 8px; border-bottom: 1px solid rgba(255,255,255,.05); display: flex; align-items: center; gap: 7px; }
+.ev-card-emoji { font-size: 15px; }
+.ev-card-case { margin-left: auto; font-size: 9px; color: var(--c-text3); font-family: var(--font-mono); }
+.ev-card-body { padding: 10px 12px; }
+.ev-card-title { font-size: 12px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
+.ev-card-desc { font-size: 10.5px; color: var(--c-text3); line-height: 1.45; }
+.ev-card-footer { padding: 7px 12px; border-top: 1px solid rgba(255,255,255,.05); display: flex; align-items: center; justify-content: space-between; }
+.ev-card-date { font-size: 9.5px; color: var(--c-text3); font-family: var(--font-mono); }
+.ev-card-actions { display: flex; gap: 3px; }
+.ev-action-btn { width: 22px; height: 22px; border-radius: 5px; background: rgba(255,255,255,.05); border: none; color: var(--c-text3); display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; transition: all var(--transition); }
+.ev-action-btn:hover { background: rgba(255,255,255,.1); color: var(--c-text); }
+
+.connect-mode-bar { background: linear-gradient(90deg, rgba(79,99,247,.15), rgba(124,59,237,.1)); border: 1px solid var(--c-accent); border-radius: var(--radius-sm); padding: 9px 14px; display: flex; align-items: center; gap: 10px; font-size: 13px; margin-bottom: 12px; }
+.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c-accent); animation: pulseDot 1.5s infinite; }
+@keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(1.3); } }
+.conn-line { stroke: var(--c-accent); stroke-width: 1.5; fill: none; opacity: .4; stroke-dasharray: 5 4; }
+
+/* ============================================================
+   CASE MANAGEMENT (KANBAN)
+============================================================ */
+.kanban-board { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; min-height: 500px; contain: layout style; }
+.kanban-board::-webkit-scrollbar { height: 5px; }
+
+.kanban-col { min-width: 268px; max-width: 268px; background: var(--c-card); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 14px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; contain: layout; }
+.kanban-col-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--c-border); margin-bottom: 2px; }
+.kanban-col-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+.kanban-col-count { font-size: 10.5px; background: rgba(255,255,255,.07); padding: 2px 7px; border-radius: 99px; color: var(--c-text3); }
+.kanban-drop-zone { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 60px; border-radius: var(--radius-sm); transition: background var(--transition); }
+.kanban-drop-zone.drag-over { background: var(--c-accent-dim); border: 2px dashed var(--c-accent); }
+
+.kcase-card { background: var(--c-surface2); border: 1px solid var(--c-border); border-radius: var(--radius-sm); padding: 13px; cursor: grab; transition: border-color var(--transition), box-shadow var(--transition); will-change: transform; /* PERFORMANCE: accelerate drags */ }
+.kcase-card:hover { border-color: var(--c-border2); box-shadow: var(--shadow-sm); }
+.kcase-card.dragging { opacity: .45; border-style: dashed; cursor: grabbing; transition: none; }
+.kcase-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+.kcase-name { font-size: 13px; font-weight: 700; margin-bottom: 5px; line-height: 1.3; }
+.kcase-meta { font-size: 11px; color: var(--c-text3); line-height: 1.5; margin-bottom: 10px; }
+.kcase-footer { display: flex; align-items: center; justify-content: space-between; }
+.kcase-avatar { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--c-card); display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 700; }
+.kcase-due { font-size: 10px; color: var(--c-text3); display: flex; align-items: center; gap: 3px; }
+.kcase-progress { height: 2.5px; background: rgba(255,255,255,.06); border-radius: 9px; overflow: hidden; margin-top: 10px; }
+.kcase-progress-fill { height: 100%; background: linear-gradient(90deg, var(--c-accent), var(--c-accent2)); border-radius: 9px; }
+
+.kanban-add-btn { width: 100%; padding: 9px; background: rgba(255,255,255,.03); border: 1px dashed var(--c-border); border-radius: var(--radius-sm); color: var(--c-text3); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all var(--transition); }
+.kanban-add-btn:hover { background: var(--c-accent-dim); border-color: var(--c-accent); color: var(--c-accent); }
+
+/* ============================================================
+   RELATIONSHIP GRAPH VIEW
+============================================================ */
+.graph-container { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); position: relative; overflow: hidden; height: 600px; contain: strict; /* PERFORMANCE: strict containment */ }
+#graph-svg { display: block; cursor: grab; will-change: transform; }
+#graph-svg:active { cursor: grabbing; }
+.graph-node { cursor: pointer; will-change: transform; }
+.graph-node circle { transition: r .2s ease; }
+.graph-node:hover circle { r: 23; }
+
+.graph-tooltip { position: absolute; background: var(--c-card2); border: 1px solid var(--c-border2); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12px; pointer-events: none; opacity: 0; transition: opacity var(--transition); box-shadow: var(--shadow); z-index: 99; min-width: 150px; will-change: opacity, transform; }
+.graph-tooltip.visible { opacity: 1; }
+.graph-tooltip-name { font-weight: 700; margin-bottom: 3px; }
+.graph-tooltip-type { color: var(--c-text3); font-size: 11px; }
+.graph-tooltip-conns { color: var(--c-accent); font-size: 11px; margin-top: 3px; }
+
+.graph-legend-panel { position: absolute; bottom: 14px; left: 14px; background: rgba(14,16,26,.85); backdrop-filter: blur(10px); border: 1px solid var(--c-border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; flex-direction: column; gap: 7px; }
+.graph-legend-title { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--c-text3); font-weight: 700; margin-bottom: 3px; }
+.graph-ctrl-panel { position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 5px; }
+.graph-ctrl-btn { width: 34px; height: 34px; border-radius: var(--radius-sm); background: rgba(14,16,26,.85); backdrop-filter: blur(10px); border: 1px solid var(--c-border); color: var(--c-text); font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition); }
+.graph-ctrl-btn:hover { background: var(--c-accent-glow); border-color: var(--c-accent); }
+.graph-stats-panel { position: absolute; top: 14px; left: 14px; background: rgba(14,16,26,.85); backdrop-filter: blur(10px); border: 1px solid var(--c-border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12px; }
+.graph-stats-val { font-size: 20px; font-weight: 800; color: var(--c-accent); }
+.graph-stats-label { color: var(--c-text3); font-size: 10px; }
+
+/* ============================================================
+   TIMELINE VIEW
+============================================================ */
+.timeline-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.timeline-wrapper { position: relative; padding-left: 24px; contain: layout; }
+.timeline-spine { position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, var(--c-accent), var(--c-accent2), transparent); }
+.timeline-event { position: relative; margin-bottom: 16px; display: flex; gap: 16px; align-items: flex-start; animation: fadeInUp .35s ease both; }
+.timeline-dot { position: absolute; left: -24px; top: 12px; width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--c-bg); display: flex; align-items: center; justify-content: center; font-size: 9px; z-index: 1; }
+.timeline-card { flex: 1; background: var(--c-card); border: 1px solid var(--c-border); border-radius: var(--radius-sm); padding: 14px; transition: border-color var(--transition); }
+.timeline-card:hover { border-color: var(--c-border2); }
+.timeline-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.timeline-card-title { font-size: 13px; font-weight: 700; }
+.timeline-card-date { font-size: 10.5px; color: var(--c-text3); font-family: var(--font-mono); white-space: nowrap; }
+.timeline-card-desc { font-size: 12px; color: var(--c-text3); line-height: 1.55; margin-bottom: 10px; }
+.timeline-card-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+.timeline-status-line { height: 2.5px; border-radius: 9px; margin-top: 10px; }
+
+/* ============================================================
+   MODALS
+============================================================ */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(4px); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+.modal-box { background: var(--c-card); border: 1px solid var(--c-border2); border-radius: var(--radius-lg); padding: 26px; width: 480px; max-width: 95vw; max-height: 88vh; overflow-y: auto; transform: scale(.94) translateY(10px); transition: transform .25s; will-change: transform, opacity; }
+.modal-backdrop.open .modal-box { transform: none; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.modal-title { font-size: 16px; font-weight: 800; }
+.modal-close { width: 30px; height: 30px; border-radius: var(--radius-sm); background: rgba(255,255,255,.06); border: none; color: var(--c-text3); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition); }
+.modal-close:hover { background: rgba(255,255,255,.12); color: var(--c-text); }
+
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; color: var(--c-text3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+.form-input, .form-select, .form-textarea { width: 100%; background: var(--c-card2); border: 1px solid var(--c-border); border-radius: var(--radius-sm); padding: 9px 13px; color: var(--c-text); font-size: 13px; outline: none; transition: border-color var(--transition); }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--c-accent); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-select { cursor: pointer; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ============================================================
+   TOAST
+============================================================ */
+#toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; contain: layout; }
+.toast-item { background: var(--c-card2); border: 1px solid var(--c-border2); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow); min-width: 260px; transform: translateX(110%); transition: transform .3s cubic-bezier(.4,0,.2,1); pointer-events: all; will-change: transform; }
+.toast-item.show { transform: translateX(0); }
+.toast-item.success { border-left: 3px solid var(--c-green); }
+.toast-item.error { border-left: 3px solid var(--c-red); }
+.toast-item.info { border-left: 3px solid var(--c-accent); }
+
+/* ============================================================
+   SEARCH DROPDOWN
+============================================================ */
+.search-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--c-card2); border: 1px solid var(--c-border2); border-radius: var(--radius-sm); padding: 6px; z-index: 999; box-shadow: var(--shadow); max-height: 300px; overflow-y: auto; display: none; }
+.search-result-item { padding: 9px 11px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background var(--transition); }
+.search-result-item:hover { background: rgba(255,255,255,.06); }
+.search-result-icon { font-size: 14px; flex-shrink: 0; }
+.search-result-name { font-size: 13px; font-weight: 600; }
+.search-result-sub { font-size: 11px; color: var(--c-text3); }
+
+/* ============================================================
+   DATA TABLE
+============================================================ */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th { text-align: left; font-size: 10.5px; font-weight: 700; color: var(--c-text3); text-transform: uppercase; letter-spacing: .5px; padding: 8px 12px; border-bottom: 1px solid var(--c-border); }
+.data-table td { padding: 11px 12px; border-bottom: 1px solid rgba(255,255,255,.03); vertical-align: middle; }
+.data-table tr:hover td { background: rgba(255,255,255,.02); }
+.data-table tr:last-child td { border: none; }
+
+/* ============================================================
+   MISC ANIMATIONS & UTILITIES
+============================================================ */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes glowPulse { 0%, 100% { box-shadow: 0 0 20px rgba(79,99,247,.3); } 50% { box-shadow: 0 0 40px rgba(79,99,247,.6); } }
+.glow-anim { animation: glowPulse 3s ease-in-out infinite; }
+
+.report-card { background: var(--c-card); border: 1px solid var(--c-border); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition); }
+.report-card:hover { border-color: var(--c-accent); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,99,247,.15); }
+.report-icon { font-size: 28px; margin-bottom: 10px; }
+.report-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.report-meta { font-size: 11.5px; color: var(--c-text3); margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div id="toast-wrap"></div>
+
+<!-- ===== MODALS ===== -->
+<!-- New Case Modal -->
+<div class="modal-backdrop" id="modal-new-case">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">🗂️ Create New Case</div>
+      <button class="modal-close" onclick="closeModal('modal-new-case')">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Case Name *</label>
+      <input class="form-input" id="nc-name" placeholder="e.g. Operation Shadow Hawk"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-select" id="nc-priority">
+          <option value="high">🔴 High</option>
+          <option value="medium" selected>🟡 Medium</option>
+          <option value="low">🟢 Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Due Date</label>
+        <input class="form-input" id="nc-due" type="date"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="nc-desc" placeholder="Case summary..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Assigned Agent</label>
+        <select class="form-select" id="nc-agent">
+          <option>Rivera</option><option>Chen</option><option>Nakamura</option><option>Osei</option><option>Martinez</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="nc-cat">
+          <option>Financial</option><option>Cyber</option><option>Smuggling</option><option>Fraud</option><option>Counterintel</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="submitNewCase()">
+      ✓ Create Case
+    </button>
+  </div>
+</div>
+
+<!-- New Evidence Modal -->
+<div class="modal-backdrop" id="modal-new-evidence">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">📌 Add Evidence</div>
+      <button class="modal-close" onclick="closeModal('modal-new-evidence')">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Title *</label>
+      <input class="form-input" id="ne-title" placeholder="Evidence title..."/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="ne-type">
+          <option value="person">👤 Person</option>
+          <option value="document">📄 Document</option>
+          <option value="location">📍 Location</option>
+          <option value="evidence">🔬 Physical Evidence</option>
+          <option value="media">🎬 Media</option>
+          <option value="event">⚡ Event</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Case</label>
+        <select class="form-select" id="ne-case">
+          <option value="CASE-0715">CASE-0715</option>
+          <option value="CASE-0714">CASE-0714</option>
+          <option value="CASE-0712">CASE-0712</option>
+          <option value="CASE-0709">CASE-0709</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="ne-desc" placeholder="Evidence details..."></textarea>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="submitNewEvidence()">
+      ✓ Add to Board
+    </button>
+  </div>
+</div>
+
+<!-- New Timeline Event Modal -->
+<div class="modal-backdrop" id="modal-new-event">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">📅 Add Timeline Event</div>
+      <button class="modal-close" onclick="closeModal('modal-new-event')">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Event Title *</label>
+      <input class="form-input" id="et-title" placeholder="e.g. Search Warrant Executed"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" id="et-date" type="date"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="et-cat">
+          <option value="milestone">🏁 Milestone</option>
+          <option value="evidence">🔬 Evidence</option>
+          <option value="interview">💬 Interview</option>
+          <option value="report">📄 Report</option>
+          <option value="action">⚡ Field Action</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="et-desc" placeholder="Event details..."></textarea>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="submitNewEvent()">
+      ✓ Add Event
+    </button>
+  </div>
+</div>
+
+<!-- ===== APP LAYOUT ===== -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-logo glow-anim" onclick="toggleSidebar()" title="Intelligence Board">🔍</div>
+
+    <button class="sb-nav-item active" id="nav-dashboard" onclick="showView('dashboard', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+      <span class="nav-label">Dashboard</span>
+    </button>
+
+    <button class="sb-nav-item" id="nav-evidence" onclick="showView('evidence', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+      </svg>
+      <span class="nav-label">Evidence Board</span>
+      <span class="nav-badge" id="ev-badge">12</span>
+    </button>
+
+    <button class="sb-nav-item" id="nav-cases" onclick="showView('cases', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+      </svg>
+      <span class="nav-label">Case Management</span>
+      <span class="nav-badge">24</span>
+    </button>
+
+    <button class="sb-nav-item" id="nav-graph" onclick="showView('graph', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+      <span class="nav-label">Relationships</span>
+    </button>
+
+    <button class="sb-nav-item" id="nav-timeline" onclick="showView('timeline', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="2" x2="12" y2="22"/>
+        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+      </svg>
+      <span class="nav-label">Timeline</span>
+    </button>
+
+    <button class="sb-nav-item" id="nav-reports" onclick="showView('reports', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+      <span class="nav-label">Reports</span>
+    </button>
+
+    <div class="sb-divider"></div>
+
+    <button class="sb-toggle" onclick="toggleSidebar()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      <span class="toggle-text">Collapse Menu</span>
+    </button>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-brand">Concord <span>IIB</span></div>
+      <div class="topbar-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input id="global-search" placeholder="Search cases, evidence, people..." oninput="globalSearch(this.value)" onblur="setTimeout(closeSearch,200)"/>
+        <div class="search-dropdown" id="search-dropdown"></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="case-badge">Case #2024-0715</span>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('modal-new-evidence')">+ Evidence</button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-case')">+ New Case</button>
+        <button class="notif-btn" onclick="showToast('3 unread security alerts', 'info')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+          <div class="notif-dot"></div>
+        </button>
+        <div class="user-avatar" title="Agent Rivera">AR</div>
+      </div>
+    </header>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+
+      <!-- ===================================================
+           VIEW 1: DASHBOARD
+      =================================================== -->
+      <div class="view active" id="view-dashboard">
+
+        <!-- Hero Banner -->
+        <div class="dash-hero">
+          <div class="hero-content" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
+            <div>
+              <div class="hero-title">Intelligence <span class="accent">Investigation Board</span></div>
+              <div class="hero-subtitle">Organize. Connect. Analyze. Uncover the Truth.</div>
+              <div class="hero-meta">
+                <div class="hero-stat">
+                  <div class="hero-stat-val" id="hero-cases">0</div>
+                  <div class="hero-stat-label">Cases</div>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                  <div class="hero-stat-val" id="hero-evidence">0</div>
+                  <div class="hero-stat-label">Evidence</div>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                  <div class="hero-stat-val" id="hero-connections">0</div>
+                  <div class="hero-stat-label">Connections</div>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                  <div class="hero-stat-val" id="hero-tasks">0</div>
+                  <div class="hero-stat-label">Open Tasks</div>
+                </div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;color:var(--c-text3);text-transform:uppercase;letter-spacing:.5px">Active Operation</div>
+              <div style="font-size:14px;font-weight:700;margin-top:3px">Operation Shadow Hawk</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:6px;justify-content:flex-end">
+                <span style="width:7px;height:7px;border-radius:50%;background:var(--c-green);display:inline-block;animation:pulseDot 1.5s infinite"></span>
+                <span style="font-size:11px;color:var(--c-green)">Live · Updated 2h ago</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="grid-4">
+          <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(79,99,247,.15)">📂</div>
+            <div class="stat-number" style="color:#818cf8">24</div>
+            <div class="stat-name">Active Cases</div>
+            <div class="stat-change up">↑ 3 new this week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(34,197,94,.15)">🔎</div>
+            <div class="stat-number" style="color:#4ade80">156</div>
+            <div class="stat-name">Evidence Items</div>
+            <div class="stat-change up">↑ 14 added recently</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(245,158,11,.15)">🔗</div>
+            <div class="stat-number" style="color:#fbbf24">89</div>
+            <div class="stat-name">Connections Mapped</div>
+            <div class="stat-change up">↑ 7 new links</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(239,68,68,.15)">⚡</div>
+            <div class="stat-number" style="color:#f87171">18</div>
+            <div class="stat-name">Open Tasks</div>
+            <div class="stat-change down">↓ 5 overdue</div>
+          </div>
+        </div>
+
+        <!-- Progress & Activity -->
+        <div class="grid-2">
+          <!-- Investigation Progress -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Investigation Progress</div>
+                <div class="card-subtitle">Case #2024-0715 — Operation Shadow Hawk</div>
+              </div>
+              <select class="form-select" style="width:auto;font-size:12px;padding:4px 10px" onchange="updateRing(this.value)">
+                <option value="0715">Case 0715</option>
+                <option value="0714">Case 0714</option>
+                <option value="0712">Case 0712</option>
+              </select>
+            </div>
+            <div class="ring-wrap">
+              <div class="ring-container">
+                <svg width="108" height="108" viewBox="0 0 108 108">
+                  <circle class="ring-bg" cx="54" cy="54" r="44"/>
+                  <circle class="ring-fill" id="ring-completed" cx="54" cy="54" r="44" stroke="#4f63f7"
+                    stroke-dasharray="276.5" stroke-dashoffset="88.5"/>
+                  <circle class="ring-fill" id="ring-inprogress" cx="54" cy="54" r="44" stroke="#f59e0b"
+                    stroke-dasharray="276.5" stroke-dashoffset="214.8" opacity=".7"/>
+                </svg>
+                <div class="ring-label">
+                  <div class="ring-pct" id="ring-pct">68%</div>
+                  <div class="ring-sub">Complete</div>
+                </div>
+              </div>
+              <div class="ring-legend">
+                <div class="legend-row">
+                  <div class="legend-dot" style="background:#4f63f7"></div>
+                  <span>Completed</span>
+                  <span class="legend-pct" id="ring-leg-c">68%</span>
+                </div>
+                <div class="legend-row">
+                  <div class="legend-dot" style="background:#f59e0b"></div>
+                  <span>In Progress</span>
+                  <span class="legend-pct" id="ring-leg-p">22%</span>
+                </div>
+                <div class="legend-row">
+                  <div class="legend-dot" style="background:rgba(255,255,255,.15)"></div>
+                  <span>Not Started</span>
+                  <span class="legend-pct" id="ring-leg-n">10%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Recent Activity</div>
+              <button class="btn btn-ghost btn-sm" onclick="showView('timeline', document.getElementById('nav-timeline'))">View All</button>
+            </div>
+            <div class="activity-feed" id="activity-feed">
+              <div class="activity-item">
+                <div class="activity-icon" style="background:rgba(34,197,94,.15);color:#4ade80">✚</div>
+                <div><div class="activity-text">New evidence added — Surveillance footage #7B</div><div class="activity-time">2h ago · Agent Rivera</div></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon" style="background:rgba(79,99,247,.15);color:#818cf8">📅</div>
+                <div><div class="activity-text">Interview scheduled — Witness M. Delacroix</div><div class="activity-time">5h ago · Agent Chen</div></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon" style="background:rgba(245,158,11,.15);color:#fbbf24">🔗</div>
+                <div><div class="activity-text">Case linked — #0714 connected to #0715</div><div class="activity-time">1d ago · System</div></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon" style="background:rgba(167,139,250,.15);color:#a78bfa">📄</div>
+                <div><div class="activity-text">Report updated — Forensic Analysis v3.2</div><div class="activity-time">2d ago · Agent Nakamura</div></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon" style="background:rgba(239,68,68,.15);color:#f87171">🚨</div>
+                <div><div class="activity-text">Alert: Suspect confirmed at Warehouse 9</div><div class="activity-time">2d ago · Agent Osei</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts & Tasks -->
+        <div class="grid-3">
+          <!-- Evidence Types -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Evidence Distribution</div>
+            </div>
+            <div class="donut-wrap">
+              <svg width="100" height="100" viewBox="0 0 100 100" id="donut-svg"></svg>
+              <div class="donut-legend" id="donut-legend"></div>
+            </div>
+            <div style="margin-top:20px">
+              <div class="card-title" style="font-size:12px;margin-bottom:10px">Weekly Intake</div>
+              <div class="bar-chart-wrap" id="bar-chart"></div>
+              <div class="bar-labels" id="bar-labels"></div>
+            </div>
+          </div>
+
+          <!-- Tasks -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Open Tasks</div>
+              <span class="badge status-open">18</span>
+            </div>
+            <div id="task-list"></div>
+          </div>
+
+          <!-- Top Cases -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Top Cases</div>
+            </div>
+            <div id="top-cases-list"></div>
+          </div>
+        </div>
+
+      </div><!-- /view-dashboard -->
+
+      <!-- ===================================================
+           VIEW 2: EVIDENCE BOARD
+      =================================================== -->
+      <div class="view" id="view-evidence">
+        <div class="section-header">
+          <div>
+            <div class="section-title">🗂️ Evidence Board</div>
+            <div class="section-subtitle">Drag cards to reposition · Use Connect Mode to link evidence</div>
+          </div>
+          <div class="section-actions">
+            <button class="btn btn-secondary btn-sm" id="connect-btn" onclick="toggleConnectMode()">🔗 Connect Mode</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearAllConnections()">🧹 Clear Links</button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-evidence')">+ Add Evidence</button>
+          </div>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="board-filter-bar" id="ev-filter-chips">
+          <div class="chip active" onclick="filterBoard(this,'all')">All</div>
+          <div class="chip" onclick="filterBoard(this,'person')">👤 People</div>
+          <div class="chip" onclick="filterBoard(this,'document')">📄 Documents</div>
+          <div class="chip" onclick="filterBoard(this,'location')">📍 Locations</div>
+          <div class="chip" onclick="filterBoard(this,'evidence')">🔬 Physical</div>
+          <div class="chip" onclick="filterBoard(this,'media')">🎬 Media</div>
+          <div class="chip" onclick="filterBoard(this,'event')">⚡ Events</div>
+        </div>
+
+        <!-- Connect Mode Banner -->
+        <div class="connect-mode-bar" id="connect-bar" style="display:none">
+          <div class="pulse-dot"></div>
+          <strong>Connect Mode Active</strong> — Click a source card, then click a target card to create a link.
+          <button class="btn btn-ghost btn-sm" onclick="toggleConnectMode()" style="margin-left:auto">Exit Connect</button>
+        </div>
+
+        <!-- Board Canvas -->
+        <div class="board-canvas" id="board-canvas">
+          <svg id="conn-svg"></svg>
+          <!-- Evidence cards injected by JS -->
+        </div>
+      </div><!-- /view-evidence -->
+
+      <!-- ===================================================
+           VIEW 3: CASE MANAGEMENT (KANBAN)
+      =================================================== -->
+      <div class="view" id="view-cases">
+        <div class="section-header">
+          <div>
+            <div class="section-title">📁 Case Management</div>
+            <div class="section-subtitle">Drag & drop cases between columns to update status</div>
+          </div>
+          <div class="section-actions">
+            <button class="btn btn-secondary btn-sm" onclick="showView('reports', document.getElementById('nav-reports'))">📊 View Reports</button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-case')">+ New Case</button>
+          </div>
+        </div>
+        <div class="kanban-board" id="kanban-board"></div>
+      </div><!-- /view-cases -->
+
+      <!-- ===================================================
+           VIEW 4: RELATIONSHIP GRAPH
+      =================================================== -->
+      <div class="view" id="view-graph">
+        <div class="section-header">
+          <div>
+            <div class="section-title">🕸️ Relationship Graph</div>
+            <div class="section-subtitle">Force-directed node graph · Scroll to zoom · Drag to pan · Drag nodes</div>
+          </div>
+          <div class="section-actions">
+            <button class="btn btn-ghost btn-sm" onclick="resetGraph()">🔄 Reset Layout</button>
+            <button class="btn btn-secondary btn-sm" onclick="addGraphNode()">+ Add Node</button>
+          </div>
+        </div>
+        <div class="graph-container" id="graph-container">
+          <svg id="graph-svg" width="100%" height="600"></svg>
+          <div class="graph-tooltip" id="graph-tooltip"></div>
+          <div class="graph-stats-panel">
+            <div class="graph-stats-val" id="g-node-count">10</div>
+            <div class="graph-stats-label">Nodes</div>
+            <div class="graph-stats-val" style="margin-top:6px" id="g-edge-count">13</div>
+            <div class="graph-stats-label">Connections</div>
+          </div>
+          <div class="graph-legend-panel">
+            <div class="graph-legend-title">Node Types</div>
+            <div class="legend-row"><div class="legend-dot" style="background:#60a5fa;width:11px;height:11px;border-radius:50%"></div>Person</div>
+            <div class="legend-row"><div class="legend-dot" style="background:#34d399;width:11px;height:11px;border-radius:50%"></div>Evidence</div>
+            <div class="legend-row"><div class="legend-dot" style="background:#fbbf24;width:11px;height:11px;border-radius:50%"></div>Location</div>
+            <div class="legend-row"><div class="legend-dot" style="background:#a78bfa;width:11px;height:11px;border-radius:50%"></div>Document</div>
+            <div class="legend-row"><div class="legend-dot" style="background:#fb7185;width:11px;height:11px;border-radius:50%"></div>Event</div>
+          </div>
+          <div class="graph-ctrl-panel">
+            <button class="graph-ctrl-btn" onclick="graphZoom(1.2)" title="Zoom In">+</button>
+            <button class="graph-ctrl-btn" onclick="graphZoom(.83)" title="Zoom Out">−</button>
+            <button class="graph-ctrl-btn" onclick="resetGraph()" title="Reset">⟳</button>
+          </div>
+        </div>
+      </div><!-- /view-graph -->
+
+      <!-- ===================================================
+           VIEW 5: INVESTIGATION TIMELINE
+      =================================================== -->
+      <div class="view" id="view-timeline">
+        <div class="section-header">
+          <div>
+            <div class="section-title">📅 Investigation Timeline</div>
+            <div class="section-subtitle">Chronological milestones, events, and key actions</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-event')">+ Add Event</button>
+        </div>
+        <div class="timeline-filters" id="tl-filters">
+          <div class="chip active" onclick="filterTimeline(this,'all')">All Events</div>
+          <div class="chip" onclick="filterTimeline(this,'milestone')">🏁 Milestones</div>
+          <div class="chip" onclick="filterTimeline(this,'evidence')">🔬 Evidence</div>
+          <div class="chip" onclick="filterTimeline(this,'interview')">💬 Interviews</div>
+          <div class="chip" onclick="filterTimeline(this,'report')">📄 Reports</div>
+          <div class="chip" onclick="filterTimeline(this,'action')">⚡ Actions</div>
+        </div>
+        <div class="timeline-wrapper" id="timeline-wrapper">
+          <div class="timeline-spine"></div>
+        </div>
+      </div><!-- /view-timeline -->
+
+      <!-- ===================================================
+           VIEW 6: REPORTS
+      =================================================== -->
+      <div class="view" id="view-reports">
+        <div class="section-header">
+          <div>
+            <div class="section-title">📊 Investigation Reports</div>
+            <div class="section-subtitle">Auto-generated case summaries and analytics</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="generateReport()">⚡ Generate Report</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px" id="report-cards"></div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Case Status Overview</div>
+            <button class="btn btn-ghost btn-sm" onclick="exportTable()">⬇ Export</button>
+          </div>
+          <table class="data-table" id="report-table">
+            <thead>
+              <tr>
+                <th>Case ID</th><th>Case Name</th><th>Lead Agent</th>
+                <th>Status</th><th>Priority</th><th>Evidence</th><th>Progress</th>
+              </tr>
+            </thead>
+            <tbody id="report-table-body"></tbody>
+          </table>
+        </div>
+      </div><!-- /view-reports -->
+
+    </div><!-- /content-area -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+/* =====================================================
+   APPLICATION STATE
+===================================================== */
+const APP = {
+  cases: [
+    { id:'CASE-0715', name:'Operation Shadow Hawk', agent:'Rivera', status:'active', priority:'high', ev:24, prog:68, due:'Aug 15', desc:'High-priority financial crime surveillance network investigation.', cat:'Financial' },
+    { id:'CASE-0714', name:'Project Nightfall', agent:'Chen', status:'active', priority:'high', ev:18, prog:45, due:'Jul 30', desc:'Cross-border smuggling operation with multiple suspect profiles.', cat:'Smuggling' },
+    { id:'CASE-0712', name:'Cerulean Gate', agent:'Nakamura', status:'review', priority:'medium', ev:31, prog:82, due:'Jul 20', desc:'Insider trading case with evidence of digital data tampering.', cat:'Fraud' },
+    { id:'CASE-0709', name:'Blue Horizon', agent:'Osei', status:'active', priority:'medium', ev:11, prog:30, due:'Sep 01', desc:'Environmental crime investigation at industrial coastal site.', cat:'Environmental' },
+    { id:'CASE-0703', name:'Phantom Circuit', agent:'Rivera', status:'open', priority:'low', ev:5, prog:12, due:'Oct 01', desc:'Cybercrime case targeting municipal water infrastructure.', cat:'Cyber' },
+    { id:'CASE-0698', name:'Iron Veil', agent:'Chen', status:'closed', priority:'high', ev:52, prog:100, due:'Jun 10', desc:'Concluded counterintelligence operation. 3 convictions.', cat:'Counterintel' },
+  ],
+  evidence: [
+    { id:'EV001', title:'Marcus Delacroix', type:'person', x:55, y:55, desc:'Primary suspect, senior financial analyst at Vertex Corp', caseId:'CASE-0715', date:'2024-01-10' },
+    { id:'EV002', title:'Surveillance Footage #7B', type:'media', x:305, y:70, desc:'CCTV footage from Warehouse District — 3h of footage', caseId:'CASE-0715', date:'2024-01-15' },
+    { id:'EV003', title:'Warehouse District 9', type:'location', x:560, y:110, desc:'Confirmed meeting point, Zone 4 Industrial Sector', caseId:'CASE-0715', date:'2024-01-12' },
+    { id:'EV004', title:'Financial Records #3', type:'document', x:90, y:270, desc:'Offshore transaction logs — $3.4M USD movement traced', caseId:'CASE-0715', date:'2024-01-18' },
+    { id:'EV005', title:'Elena Vargas', type:'person', x:355, y:250, desc:'Potential accomplice, logistics manager at shipping co.', caseId:'CASE-0714', date:'2024-01-20' },
+    { id:'EV006', title:'Burner Phone SIM', type:'evidence', x:600, y:300, desc:'Recovered from Warehouse 9, IMEI traced to network', caseId:'CASE-0715', date:'2024-01-22' },
+    { id:'EV007', title:'Meeting — Jan 28', type:'event', x:170, y:440, desc:'Confirmed rendezvous at Pier 7 — 4 persons identified', caseId:'CASE-0715', date:'2024-01-28' },
+    { id:'EV008', title:'Interpol Report v2', type:'document', x:430, y:440, desc:'Cross-reference with international financial crime watchlist', caseId:'CASE-0712', date:'2024-02-01' },
+    { id:'EV009', title:'Victor Saenz', type:'person', x:660, y:470, desc:'Known associate — offshore shipping company owner', caseId:'CASE-0714', date:'2024-01-25' },
+    { id:'EV010', title:'Digital Trace Log', type:'evidence', x:245, y:530, desc:'IP logs extracted from compromised internal server', caseId:'CASE-0712', date:'2024-02-05' },
+    { id:'EV011', title:'Safe House Alpha', type:'location', x:510, y:550, desc:'Rented under alias — confirmed hideout, searched Feb 12', caseId:'CASE-0715', date:'2024-02-08' },
+    { id:'EV012', title:'Anonymous Tip Audio', type:'media', x:72, y:545, desc:'Voicemail recording — enhanced audio, voice analyzed', caseId:'CASE-0715', date:'2024-02-10' },
+  ],
+  connections: [
+    ['EV001','EV002'],['EV001','EV004'],['EV002','EV003'],
+    ['EV005','EV006'],['EV003','EV007'],['EV005','EV009'],
+    ['EV004','EV007'],['EV006','EV011'],['EV009','EV010'],
+  ],
+  kanban: {
+    'Open': [
+      { id:'KC001', name:'Operation Shadow Hawk', priority:'high', agent:'Rivera', due:'Aug 15', prog:12, desc:'Initial surveillance & evidence gathering phase.', tags:['Financial','Priority'] },
+      { id:'KC002', name:'Phantom Circuit', priority:'low', agent:'Rivera', due:'Oct 01', prog:5, desc:'Digital footprint analysis and network mapping.', tags:['Cyber'] },
+    ],
+    'In Progress': [
+      { id:'KC003', name:'Project Nightfall', priority:'high', agent:'Chen', due:'Jul 30', prog:45, desc:'Cross-border smuggling — suspect profiling active.', tags:['Smuggling','Priority'] },
+      { id:'KC004', name:'Blue Horizon', priority:'medium', agent:'Osei', due:'Sep 01', prog:30, desc:'Environmental crime site investigation ongoing.', tags:['Environmental'] },
+    ],
+    'Under Review': [
+      { id:'KC005', name:'Cerulean Gate', priority:'medium', agent:'Nakamura', due:'Jul 20', prog:82, desc:'Digital forensics complete, awaiting legal review.', tags:['Fraud'] },
+    ],
+    'Closed': [
+      { id:'KC006', name:'Iron Veil', priority:'high', agent:'Chen', due:'Jun 10', prog:100, desc:'Concluded operation. 3 convictions secured.', tags:['Counterintel'] },
+    ],
+  },
+  timeline: [
+    { id:'TL001', title:'Case Opened', date:'2024-01-10', cat:'milestone', desc:'Operation Shadow Hawk formally initiated by Director Martinez. Full field team briefing conducted.', status:'completed' },
+    { id:'TL002', title:'Evidence Collection Begins', date:'2024-01-15', cat:'evidence', desc:'Team Alpha deployed to Warehouse District 9. 24 items collected, catalogued, and chain of custody established.', status:'completed' },
+    { id:'TL003', title:'Witness Interview — Delacroix', date:'2024-01-20', cat:'interview', desc:'Primary suspect Marcus Delacroix interviewed under caution. Alibi presented but timeline inconsistencies flagged.', status:'completed' },
+    { id:'TL004', title:'Forensic Analysis Report v1', date:'2024-01-28', cat:'report', desc:'Lab results returned for SIM card and digital trace log. Confirmed match to known criminal network.', status:'completed' },
+    { id:'TL005', title:'Interpol Cross-Reference', date:'2024-02-05', cat:'action', desc:'International watchlist cross-reference completed. Victor Saenz flagged — offshore shipping connection confirmed.', status:'completed' },
+    { id:'TL006', title:'Safe House Alpha Identified', date:'2024-02-08', cat:'milestone', desc:'Secondary suspect location confirmed via digital surveillance. Search warrant obtained from District Court.', status:'completed' },
+    { id:'TL007', title:'Search Warrant Executed', date:'2024-02-12', cat:'action', desc:'Physical search of Safe House Alpha conducted. 3 additional encrypted devices and financial records recovered.', status:'completed' },
+    { id:'TL008', title:'Interview — Elena Vargas', date:'2024-02-18', cat:'interview', desc:'Second suspect cooperative interview scheduled. Legal counsel present. Key intelligence gathered.', status:'in-progress' },
+    { id:'TL009', title:'Case Review Meeting', date:'2024-02-28', cat:'milestone', desc:'Director-level review of all gathered evidence. Decision on prosecution pathway expected.', status:'pending' },
+    { id:'TL010', title:'Final Case Report Due', date:'2024-03-15', cat:'report', desc:'Consolidated case report submission deadline. All evidence must be logged, verified, and cross-referenced.', status:'pending' },
+  ],
+
+  // State
+  connectMode: false,
+  connectSource: null,
+  boardFilter: 'all',
+  graphZoom: 1,
+  graphPanX: 0,
+  graphPanY: 0,
+  draggedKCard: null,
+  draggedKCol: null,
+};
+
+/* =====================================================
+   TYPE METADATA
+===================================================== */
+const TYPE_META = {
+  person:   { emoji:'👤', badgeClass:'badge-person',   label:'Person'   },
+  document: { emoji:'📄', badgeClass:'badge-document', label:'Document' },
+  location: { emoji:'📍', badgeClass:'badge-location', label:'Location' },
+  evidence: { emoji:'🔬', badgeClass:'badge-evidence', label:'Physical' },
+  media:    { emoji:'🎬', badgeClass:'badge-media',    label:'Media'    },
+  event:    { emoji:'⚡', badgeClass:'badge-event',    label:'Event'    },
+};
+
+const NODE_COLORS = { person: '#60a5fa', evidence: '#34d399', location: '#fbbf24', document: '#a78bfa', event: '#fb7185' };
+const PRIORITY_MAP = { high: { cls:'priority-badge-high', label:'High' }, medium: { cls:'priority-badge-medium', label:'Medium' }, low: { cls:'priority-badge-low', label:'Low' } };
+const STATUS_MAP = { active: { cls:'status-active', label:'Active' }, open: { cls:'status-open', label:'Open' }, review: { cls:'status-review', label:'Review' }, closed: { cls:'status-closed', label:'Closed' } };
+const CAT_META = { milestone: { emoji:'🏁', color:'var(--c-accent)' }, evidence: { emoji:'🔬', color:'var(--c-green)' }, interview: { emoji:'💬', color:'var(--c-cyan)' }, report: { emoji:'📄', color:'var(--c-purple)' }, action: { emoji:'⚡', color:'var(--c-yellow)' } };
+const TL_STATUS_META = { completed: { color:'var(--c-green)', label:'Completed' }, 'in-progress':{ color:'var(--c-yellow)', label:'In Progress' }, pending: { color:'rgba(255,255,255,.1)', label:'Pending' } };
+
+/* =====================================================
+   UTILITY FUNCTIONS
+===================================================== */
+function showToast(msg, type='info') {
+  const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = `toast-item ${type === 'info' ? 'info' : type === 'success' ? 'success' : type === 'warning' ? 'info' : 'error'}`;
+  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span> <span>${msg}</span>`;
+  wrap.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 320); }, 3500);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-backdrop').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('expanded'); }
+
+function showView(name, navEl) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.sb-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  if (name === 'graph') requestAnimationFrame(initGraph);
+  if (name === 'reports') requestAnimationFrame(renderReports);
+}
+
+// PERFORMANCE: RAF based counter animation
+function counterAnim(id, target, duration) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const start = performance.now();
+  const step = now => {
+    const p = Math.min((now - start) / duration, 1);
+    el.textContent = Math.round(target * p);
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/* =====================================================
+   DASHBOARD
+===================================================== */
+function initDashboard() {
+  counterAnim('hero-cases', 24, 1000);
+  counterAnim('hero-evidence', 156, 1200);
+  counterAnim('hero-connections', 89, 1100);
+  counterAnim('hero-tasks', 18, 900);
+  setTimeout(() => {
+    const circ = 2 * Math.PI * 44;
+    document.getElementById('ring-completed').style.strokeDashoffset = circ * (1 - .68);
+    document.getElementById('ring-inprogress').style.strokeDashoffset = circ * (1 - (.68 + .22));
+  }, 300);
+  
+  // PERFORMANCE: Batch dashboard renders
+  requestAnimationFrame(() => {
+    renderDonut();
+    renderBarChart();
+    renderTaskList();
+    renderTopCases();
+  });
+}
+
+const DONUT_DATA = [{ label:'Documents', color:'#a78bfa', pct:42 }, { label:'People', color:'#60a5fa', pct:28 }, { label:'Locations', color:'#fbbf24', pct:18 }, { label:'Others', color:'#fb7185', pct:12 }];
+
+function renderDonut() {
+  const svg = document.getElementById('donut-svg'), leg = document.getElementById('donut-legend');
+  const r = 36, cx = 50, cy = 50, circ = 2 * Math.PI * r;
+  let offset = 0, svgStr = '', legStr = '';
+  DONUT_DATA.forEach(({ label, color, pct }) => {
+    const dash = circ * pct / 100;
+    svgStr += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="18" stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" opacity=".92"/>`;
+    offset += dash;
+    legStr += `<div class="donut-legend-row"><div class="donut-legend-left"><div class="donut-legend-dot" style="background:${color}"></div>${label}</div><div class="donut-legend-val">${pct}%</div></div>`;
+  });
+  svg.innerHTML = svgStr; leg.innerHTML = legStr;
+}
+
+function renderBarChart() {
+  const vals = [12, 19, 8, 24, 16, 21, 14], days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], max = Math.max(...vals);
+  document.getElementById('bar-chart').innerHTML = vals.map(v => `<div class="bar-col" style="height:${v/max*100}%" title="${v} items"></div>`).join('');
+  document.getElementById('bar-labels').innerHTML = days.map(d => `<div class="bar-label">${d}</div>`).join('');
+}
+
+function renderTaskList() {
+  const tasks = [ { text:'Review forensic lab results', due:'Today', p:'high' }, { text:'Interview witness Delacroix', due:'Jul 26', p:'high' }, { text:'Upload Warehouse surveillance', due:'Jul 27', p:'medium' }, { text:'Cross-reference Interpol DB', due:'Jul 28', p:'medium' }, { text:'Draft prosecution brief', due:'Aug 01', p:'low' }, { text:'Verify Safe House Alpha logs', due:'Aug 03', p:'low' } ];
+  document.getElementById('task-list').innerHTML = tasks.map(t => `<div class="task-item"><input type="checkbox" class="task-check" onchange="this.nextElementSibling.classList.toggle('done', this.checked)"/><div class="task-text">${t.text}</div><span class="badge ${PRIORITY_MAP[t.p].cls}" style="font-size:9.5px">${t.due}</span></div>`).join('');
+}
+
+function renderTopCases() {
+  document.getElementById('top-cases-list').innerHTML = APP.cases.slice(0, 5).map(c => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer" onclick="showView('cases', document.getElementById('nav-cases'))">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--c-card2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">📁</div>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div><div style="font-size:10.5px;color:var(--c-text3);font-family:var(--font-mono)">${c.id}</div></div>
+      <div style="flex-shrink:0;text-align:right"><div style="width:64px;height:3px;background:rgba(255,255,255,.07);border-radius:9px;overflow:hidden"><div style="height:100%;width:${c.prog}%;background:linear-gradient(90deg,var(--c-accent),var(--c-accent2))"></div></div><div style="font-size:9.5px;color:var(--c-text3);margin-top:2px">${c.prog}%</div></div>
+    </div>`).join('');
+}
+
+function updateRing(key) {
+  const data = { '0715':{c:68,p:22}, '0714':{c:45,p:35}, '0712':{c:82,p:12} };
+  const { c, p } = data[key] || {c:50,p:25};
+  const circ = 2 * Math.PI * 44;
+  document.getElementById('ring-completed').style.strokeDashoffset = circ * (1 - c/100);
+  document.getElementById('ring-inprogress').style.strokeDashoffset = circ * (1 - (c+p)/100);
+  document.getElementById('ring-pct').textContent = c + '%';
+  document.getElementById('ring-leg-c').textContent = c + '%';
+  document.getElementById('ring-leg-p').textContent = p + '%';
+  document.getElementById('ring-leg-n').textContent = (100-c-p) + '%';
+}
+
+/* =====================================================
+   EVIDENCE BOARD
+===================================================== */
+let currentFilter = 'all';
+let drawConnRAF;
+
+function renderBoard(filter) {
+  if (filter !== undefined) currentFilter = filter;
+  const canvas = document.getElementById('board-canvas');
+  canvas.querySelectorAll('.ev-card').forEach(c => c.remove());
+
+  const items = currentFilter === 'all' ? APP.evidence : APP.evidence.filter(e => e.type === currentFilter);
+  const frag = document.createDocumentFragment(); // PERFORMANCE: Use fragment for batch inserts
+  items.forEach(ev => {
+    const meta = TYPE_META[ev.type] || TYPE_META.evidence;
+    const card = document.createElement('div');
+    card.className = 'ev-card'; card.id = 'ev-' + ev.id; card.dataset.id = ev.id;
+    card.style.transform = `translate(${ev.x}px, ${ev.y}px)`;
+    card.innerHTML = `<div class="ev-card-header"><span class="ev-card-emoji">${meta.emoji}</span><span class="badge ${meta.badgeClass}">${meta.label}</span><span class="ev-card-case">${ev.caseId}</span></div><div class="ev-card-body"><div class="ev-card-title">${ev.title}</div><div class="ev-card-desc">${ev.desc}</div></div><div class="ev-card-footer"><span class="ev-card-date">${ev.date}</span><div class="ev-card-actions"><button class="ev-action-btn" title="Edit" onclick="editEvidence('${ev.id}')">✏️</button><button class="ev-action-btn" title="Delete" onclick="deleteEvidence('${ev.id}')">🗑️</button></div></div>`;
+    setupCardDrag(card, ev);
+    card.addEventListener('click', () => handleCardClick(ev.id));
+    frag.appendChild(card);
+  });
+  canvas.appendChild(frag);
+  requestAnimationFrame(drawConnections);
+  document.getElementById('ev-badge').textContent = APP.evidence.length;
+}
+
+function setupCardDrag(el, ev) {
+  let dragging = false, ox = 0, oy = 0;
+  el.addEventListener('mousedown', e => {
+    if (APP.connectMode || e.target.closest('.ev-action-btn')) return;
+    dragging = true; ox = e.clientX - ev.x; oy = e.clientY - ev.y;
+    el.classList.add('dragging'); e.preventDefault();
+  });
+  const onMove = e => {
+    if (!dragging) return;
+    const rect = document.getElementById('board-canvas').getBoundingClientRect();
+    ev.x = Math.max(0, Math.min(e.clientX - ox, rect.width - 210));
+    ev.y = Math.max(0, Math.min(e.clientY - oy, rect.height - 200));
+    el.style.transform = `translate(${ev.x}px, ${ev.y}px)`; // PERFORMANCE: transform instead of top/left
+    
+    // PERFORMANCE: throttle SVG draw via RAF
+    if (!drawConnRAF) drawConnRAF = requestAnimationFrame(() => {
+      drawConnections(); drawConnRAF = null;
+    });
+  };
+  const onUp = () => { if (dragging) { dragging = false; el.classList.remove('dragging'); } };
+  document.addEventListener('mousemove', onMove, { passive: true });
+  document.addEventListener('mouseup', onUp);
+}
+
+function drawConnections() {
+  const svg = document.getElementById('conn-svg'), canvas = document.getElementById('board-canvas');
+  svg.setAttribute('width', canvas.offsetWidth); svg.setAttribute('height', canvas.offsetHeight);
+  let defs = `<defs><marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="rgba(79,99,247,.6)"/></marker></defs>`;
+  const paths = APP.connections.map(([a, b]) => {
+    const ea = APP.evidence.find(e => e.id === a), eb = APP.evidence.find(e => e.id === b);
+    if (!ea || !eb || (currentFilter !== 'all' && ea.type !== currentFilter && eb.type !== currentFilter)) return '';
+    const x1 = ea.x + 98, y1 = ea.y + 60, x2 = eb.x + 98, y2 = eb.y + 60;
+    const cpx = (x1+x2)/2, cpy = Math.min(y1,y2) - 45;
+    return `<path class="conn-line" d="M${x1},${y1} Q${cpx},${cpy} ${x2},${y2}" marker-end="url(#arrowhead)"/>`;
+  }).join('');
+  svg.innerHTML = defs + paths; // PERFORMANCE: single innerHTML assignment
+}
+
+function handleCardClick(id) {
+  if (!APP.connectMode) return;
+  if (!APP.connectSource) {
+    APP.connectSource = id; document.getElementById('ev-' + id)?.classList.add('connect-from');
+    showToast('Source selected. Now click a target card.', 'info');
+  } else if (APP.connectSource !== id) {
+    const pair = [APP.connectSource, id];
+    const exists = APP.connections.some(c => (c[0] === pair[0] && c[1] === pair[1]) || (c[0] === pair[1] && c[1] === pair[0]));
+    if (!exists) { APP.connections.push(pair); requestAnimationFrame(drawConnections); showToast('Connection created successfully!', 'success'); } else { showToast('These items are already connected.', 'error'); }
+    document.getElementById('ev-' + APP.connectSource)?.classList.remove('connect-from');
+    APP.connectSource = null;
+  }
+}
+
+function toggleConnectMode() {
+  APP.connectMode = !APP.connectMode; APP.connectSource = null;
+  document.querySelectorAll('.ev-card').forEach(c => { c.classList.remove('connect-from'); c.classList.toggle('connect-mode', APP.connectMode); });
+  document.getElementById('connect-bar').style.display = APP.connectMode ? 'flex' : 'none';
+  const btn = document.getElementById('connect-btn');
+  btn.textContent = APP.connectMode ? '🔗 Exit Connect' : '🔗 Connect Mode';
+  btn.className = APP.connectMode ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+}
+
+function clearAllConnections() { APP.connections = []; requestAnimationFrame(drawConnections); showToast('All connections cleared.', 'info'); }
+
+function filterBoard(el, type) {
+  document.querySelectorAll('#ev-filter-chips .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active'); renderBoard(type);
+}
+
+function deleteEvidence(id) {
+  APP.evidence = APP.evidence.filter(e => e.id !== id); APP.connections = APP.connections.filter(c => c[0] !== id && c[1] !== id);
+  document.getElementById('ev-' + id)?.remove(); requestAnimationFrame(drawConnections); showToast('Evidence item removed.', 'info');
+}
+
+function editEvidence(id) {
+  const ev = APP.evidence.find(e => e.id === id); if (!ev) return;
+  document.getElementById('ne-title').value = ev.title; document.getElementById('ne-type').value = ev.type; document.getElementById('ne-desc').value = ev.desc;
+  openModal('modal-new-evidence');
+}
+
+function submitNewEvidence() {
+  const title = document.getElementById('ne-title').value.trim();
+  if (!title) { showToast('Please enter a title.', 'error'); return; }
+  const type = document.getElementById('ne-type').value, caseId = document.getElementById('ne-case').value, desc = document.getElementById('ne-desc').value || 'No description.';
+  const id = 'EV' + Date.now().toString().slice(-5);
+  APP.evidence.push({ id, title, type, caseId, desc, x: Math.random() * 450 + 50, y: Math.random() * 300 + 50, date: new Date().toISOString().split('T')[0] });
+  renderBoard(); closeModal('modal-new-evidence'); showToast('Evidence added to board!', 'success'); addActivity(`New ${type} added — ${title}`, '🔬');
+  ['ne-title','ne-desc'].forEach(i => document.getElementById(i).value = '');
+}
+
+/* =====================================================
+   KANBAN
+===================================================== */
+const COL_ACCENT = { 'Open': { dot:'#818cf8', label:'Open' }, 'In Progress': { dot:'#4ade80', label:'In Progress' }, 'Under Review': { dot:'#fbbf24', label:'Under Review'}, 'Closed': { dot:'#9ca3af', label:'Closed' } };
+
+function renderKanban() {
+  const board = document.getElementById('kanban-board');
+  board.innerHTML = '';
+  const frag = document.createDocumentFragment(); // PERFORMANCE: batch inserts
+
+  Object.entries(APP.kanban).forEach(([colName, cards]) => {
+    const acc = COL_ACCENT[colName];
+    const col = document.createElement('div'); col.className = 'kanban-col';
+    col.innerHTML = `<div class="kanban-col-header"><div class="kanban-col-title"><span style="width:9px;height:9px;border-radius:50%;background:${acc.dot};display:inline-block;flex-shrink:0"></span>${colName}</div><span class="kanban-col-count">${cards.length}</span></div><div class="kanban-drop-zone" id="kzone-${colName.replace(/ /g,'-')}" ondragover="kDragOver(event,this)" ondragleave="kDragLeave(this)" ondrop="kDrop(event,'${colName}')"></div><button class="kanban-add-btn" onclick="openModal('modal-new-case')">＋ Add Case</button>`;
+    frag.appendChild(col);
+  });
+  board.appendChild(frag);
+
+  Object.entries(APP.kanban).forEach(([colName, cards]) => {
+    const zone = document.getElementById('kzone-' + colName.replace(/ /g,'-'));
+    const kFrag = document.createDocumentFragment();
+    cards.forEach(c => kFrag.appendChild(createKCard(c, colName)));
+    zone.appendChild(kFrag);
+  });
+}
+
+function createKCard(c, colName) {
+  const el = document.createElement('div'); el.className = 'kcase-card'; el.draggable = true; el.dataset.cardId = c.id;
+  const pMeta = PRIORITY_MAP[c.priority] || PRIORITY_MAP.medium;
+  const tags = (c.tags||[]).map(t => `<span class="badge status-open" style="font-size:9px">${t}</span>`).join('');
+  const initials = c.agent.slice(0,2).toUpperCase();
+  const avatarColors = ['#f59e0b','#22c55e','#60a5fa','#a78bfa','#fb7185'], ac = avatarColors[c.agent.charCodeAt(0) % avatarColors.length];
+  el.innerHTML = `<div class="kcase-tags">${tags}</div><div class="kcase-name">${c.name}</div><div class="kcase-meta">${c.desc}</div><div class="kcase-footer"><span class="badge ${pMeta.cls}">${pMeta.label}</span><span class="kcase-due">📅 ${c.due}</span><div class="kcase-avatar" style="background:${ac}">${initials}</div></div><div class="kcase-progress"><div class="kcase-progress-fill" style="width:${c.prog}%"></div></div>`;
+  el.addEventListener('dragstart', e => { APP.draggedKCard = c.id; APP.draggedKCol = colName; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+  el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  return el;
+}
+
+function kDragOver(e, zone) { e.preventDefault(); zone.classList.add('drag-over'); e.dataTransfer.dropEffect = 'move'; }
+function kDragLeave(zone) { zone.classList.remove('drag-over'); }
+function kDrop(e, toCol) {
+  e.preventDefault();
+  document.querySelectorAll('.kanban-drop-zone').forEach(z => z.classList.remove('drag-over'));
+  if (!APP.draggedKCard || APP.draggedKCol === toCol) { APP.draggedKCard = null; return; }
+  const fromArr = APP.kanban[APP.draggedKCol], idx = fromArr.findIndex(c => c.id === APP.draggedKCard);
+  if (idx === -1) return;
+  const [card] = fromArr.splice(idx, 1);
+  APP.kanban[toCol].push(card);
+  requestAnimationFrame(renderKanban); // PERFORMANCE: RAF schedule
+  showToast(`"${card.name}" moved to ${toCol}`, 'success'); addActivity(`Case "${card.name}" moved to ${toCol}`, '🗂️');
+  APP.draggedKCard = null;
+}
+
+function submitNewCase() {
+  const name = document.getElementById('nc-name').value.trim();
+  if (!name) { showToast('Please enter a case name.', 'error'); return; }
+  const priority = document.getElementById('nc-priority').value, due = document.getElementById('nc-due').value || 'TBD', desc = document.getElementById('nc-desc').value || 'New case.', agent = document.getElementById('nc-agent').value, cat = document.getElementById('nc-cat').value;
+  const id = 'KC' + Date.now().toString().slice(-5);
+  APP.kanban['Open'].push({ id, name, priority, agent, due, prog:0, desc, tags:[cat] });
+  requestAnimationFrame(renderKanban); closeModal('modal-new-case'); showToast(`Case "${name}" created!`, 'success'); addActivity(`New case created — ${name}`, '📁');
+  ['nc-name','nc-desc','nc-due'].forEach(i => document.getElementById(i).value = '');
+}
+
+/* =====================================================
+   RELATIONSHIP GRAPH (Force-Directed)
+===================================================== */
+const GRAPH_NODES = [
+  { id:'gn1', label:'Marcus Delacroix', type:'person', x:0, y:0, vx:0, vy:0 }, { id:'gn2', label:'Elena Vargas', type:'person', x:0, y:0, vx:0, vy:0 }, { id:'gn3', label:'Victor Saenz', type:'person', x:0, y:0, vx:0, vy:0 }, { id:'gn4', label:'Warehouse 9', type:'location', x:0, y:0, vx:0, vy:0 }, { id:'gn5', label:'Safe House Alpha', type:'location', x:0, y:0, vx:0, vy:0 }, { id:'gn6', label:'Financial Recs.', type:'document', x:0, y:0, vx:0, vy:0 }, { id:'gn7', label:'Burner SIM', type:'evidence', x:0, y:0, vx:0, vy:0 }, { id:'gn8', label:'Surveillance 7B', type:'evidence', x:0, y:0, vx:0, vy:0 }, { id:'gn9', label:'Jan 28 Meeting', type:'event', x:0, y:0, vx:0, vy:0 }, { id:'gn10',label:'Interpol Report', type:'document', x:0, y:0, vx:0, vy:0 }
+];
+const GRAPH_EDGES = [ ['gn1','gn4'],['gn1','gn6'],['gn1','gn8'],['gn1','gn9'],['gn2','gn7'],['gn2','gn9'],['gn2','gn10'],['gn3','gn5'],['gn3','gn8'],['gn7','gn9'],['gn4','gn8'],['gn6','gn10'],['gn5','gn4'] ];
+
+let graphInited = false, simRafId, simTicks = 0;
+
+function initGraph() {
+  if (graphInited) return; graphInited = true;
+  const svg = document.getElementById('graph-svg');
+  const W = svg.parentElement.offsetWidth, H = 600;
+
+  GRAPH_NODES.forEach((n, i) => { const angle = (i / GRAPH_NODES.length) * 2 * Math.PI; n.x = W/2 + Math.cos(angle) * 190; n.y = H/2 + Math.sin(angle) * 180; n.vx = 0; n.vy = 0; });
+
+  svg.innerHTML = `<defs><filter id="glow-f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><marker id="g-arrow" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="rgba(79,99,247,.5)"/></marker></defs><g id="g-group"><g id="g-edges"></g><g id="g-nodes"></g></g>`;
+
+  const edgesG = svg.querySelector('#g-edges');
+  // PERFORMANCE: Use DocumentFragment for SVG children
+  const eFrag = document.createDocumentFragment();
+  GRAPH_EDGES.forEach(([s, t]) => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('stroke','rgba(79,99,247,.4)'); line.setAttribute('stroke-width','1.5'); line.setAttribute('marker-end','url(#g-arrow)'); line.dataset.s = s; line.dataset.t = t;
+    eFrag.appendChild(line);
+  });
+  edgesG.appendChild(eFrag);
+
+  const nodesG = svg.querySelector('#g-nodes'), nFrag = document.createDocumentFragment();
+  const emojis = { person:'👤', evidence:'🔬', location:'📍', document:'📄', event:'⚡' };
+  GRAPH_NODES.forEach(n => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('class','graph-node'); g.dataset.id = n.id;
+    const col = NODE_COLORS[n.type] || '#60a5fa', circ = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circ.setAttribute('r','18'); circ.setAttribute('fill', col + '22'); circ.setAttribute('stroke', col); circ.setAttribute('stroke-width','2.2'); circ.setAttribute('filter','url(#glow-f)');
+    const em = document.createElementNS('http://www.w3.org/2000/svg','text'); em.setAttribute('font-size','14'); em.setAttribute('dy','5'); em.setAttribute('dx','-7'); em.textContent = emojis[n.type] || '●';
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text'); label.setAttribute('font-size','9.5'); label.setAttribute('dy','34'); label.setAttribute('text-anchor','middle'); label.setAttribute('fill','#8892b0'); label.setAttribute('font-family','Inter,sans-serif'); label.textContent = n.label.length > 14 ? n.label.slice(0,13)+'…' : n.label;
+    g.appendChild(circ); g.appendChild(em); g.appendChild(label);
+    setupNodeDrag(g, n, svg);
+    g.addEventListener('mouseenter', e => showGraphTooltip(e, n, svg));
+    g.addEventListener('mouseleave', () => document.getElementById('graph-tooltip').classList.remove('visible'));
+    nFrag.appendChild(g);
+  });
+  nodesG.appendChild(nFrag);
+
+  // Zoom/pan
+  let panning = false, panSX = 0, panSY = 0;
+  svg.addEventListener('mousedown', e => { if (e.target === svg || e.target.id === 'g-group' || e.target.id === 'g-edges') { panning = true; panSX = e.clientX - APP.graphPanX; panSY = e.clientY - APP.graphPanY; } });
+  document.addEventListener('mousemove', e => { if (!panning) return; APP.graphPanX = e.clientX - panSX; APP.graphPanY = e.clientY - panSY; requestAnimationFrame(applyGraphTransform); });
+  document.addEventListener('mouseup', () => panning = false);
+  svg.addEventListener('wheel', e => { e.preventDefault(); APP.graphZoom = Math.max(.25, Math.min(3, APP.graphZoom * (e.deltaY < 0 ? 1.12 : .89))); requestAnimationFrame(applyGraphTransform); }, { passive: false });
+
+  updateGraphPositions();
+  document.getElementById('g-node-count').textContent = GRAPH_NODES.length; document.getElementById('g-edge-count').textContent = GRAPH_EDGES.length;
+
+  // PERFORMANCE: RAF based force simulation
+  if (simRafId) cancelAnimationFrame(simRafId);
+  simTicks = 0;
+  const loop = () => {
+    forceStep(W, H);
+    if (++simTicks < 180) simRafId = requestAnimationFrame(loop);
+  };
+  simRafId = requestAnimationFrame(loop);
+}
+
+function forceStep(W, H) {
+  for (let i = 0; i < GRAPH_NODES.length; i++) {
+    for (let j = i+1; j < GRAPH_NODES.length; j++) {
+      const dx = GRAPH_NODES[j].x - GRAPH_NODES[i].x, dy = GRAPH_NODES[j].y - GRAPH_NODES[i].y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      const f = 3200 / (dist * dist), fx = f * dx / dist, fy = f * dy / dist;
+      GRAPH_NODES[i].vx -= fx; GRAPH_NODES[i].vy -= fy; GRAPH_NODES[j].vx += fx; GRAPH_NODES[j].vy += fy;
+    }
+  }
+  GRAPH_EDGES.forEach(([s, t]) => {
+    const sn = GRAPH_NODES.find(n => n.id === s), tn = GRAPH_NODES.find(n => n.id === t);
+    if (!sn || !tn) return;
+    const dx = tn.x - sn.x, dy = tn.y - sn.y, dist = Math.sqrt(dx*dx + dy*dy) || 1, f = (dist - 120) * .016;
+    sn.vx += f * dx/dist; sn.vy += f * dy/dist; tn.vx -= f * dx/dist; tn.vy -= f * dy/dist;
+  });
+  GRAPH_NODES.forEach(n => {
+    n.vx += (W/2 - n.x) * .002; n.vy += (H/2 - n.y) * .002; n.vx *= .8; n.vy *= .8; n.x += n.vx; n.y += n.vy;
+    n.x = Math.max(40, Math.min(W-40, n.x)); n.y = Math.max(40, Math.min(H-40, n.y));
+  });
+  updateGraphPositions();
+}
+
+function updateGraphPositions() {
+  const grp = document.getElementById('g-group'); if (!grp) return;
+  // PERFORMANCE: Update transform strings quickly
+  GRAPH_NODES.forEach(n => {
+    const el = grp.querySelector(`[data-id="${n.id}"]`);
+    if (el) el.setAttribute('transform', `translate(${n.x},${n.y})`);
+  });
+  GRAPH_EDGES.forEach(([s, t]) => {
+    const line = grp.querySelector(`line[data-s="${s}"][data-t="${t}"]`); if (!line) return;
+    const sn = GRAPH_NODES.find(n => n.id === s), tn = GRAPH_NODES.find(n => n.id === t); if (!sn || !tn) return;
+    line.setAttribute('x1', sn.x); line.setAttribute('y1', sn.y); line.setAttribute('x2', tn.x); line.setAttribute('y2', tn.y);
+  });
+}
+
+function setupNodeDrag(el, node, svg) {
+  let dragging = false;
+  el.addEventListener('mousedown', e => {
+    dragging = true; if (simRafId) cancelAnimationFrame(simRafId);
+    e.stopPropagation(); e.preventDefault();
+    const pt = svg.createSVGPoint();
+    const getSVGPos = ev => { pt.x = ev.clientX; pt.y = ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
+    const offset = getSVGPos(e), ox = offset.x - node.x, oy = offset.y - node.y;
+    const onMove = ev => {
+      if (!dragging) return;
+      const p = getSVGPos(ev); node.x = p.x - ox; node.y = p.y - oy; node.vx = 0; node.vy = 0;
+      requestAnimationFrame(updateGraphPositions);
+    };
+    const onUp = () => { dragging = false; document.removeEventListener('mousemove', onMove); };
+    document.addEventListener('mousemove', onMove, { passive: true });
+    document.addEventListener('mouseup', onUp, { once: true });
+  });
+}
+
+function applyGraphTransform() { const g = document.getElementById('g-group'); if (g) g.setAttribute('transform', `translate(${APP.graphPanX},${APP.graphPanY}) scale(${APP.graphZoom})`); }
+function graphZoom(f) { APP.graphZoom = Math.max(.25, Math.min(3, APP.graphZoom * f)); requestAnimationFrame(applyGraphTransform); }
+function resetGraph() {
+  APP.graphZoom = 1; APP.graphPanX = 0; APP.graphPanY = 0; applyGraphTransform();
+  const W = document.getElementById('graph-svg').parentElement.offsetWidth, H = 600;
+  GRAPH_NODES.forEach((n, i) => { const a = (i / GRAPH_NODES.length) * 2 * Math.PI; n.x = W/2 + Math.cos(a)*190; n.y = H/2 + Math.sin(a)*180; n.vx = 0; n.vy = 0; });
+  updateGraphPositions();
+  if (simRafId) cancelAnimationFrame(simRafId);
+  simTicks = 0;
+  const loop = () => { forceStep(W,H); if(++simTicks < 180) simRafId = requestAnimationFrame(loop); };
+  simRafId = requestAnimationFrame(loop);
+}
+
+function addGraphNode() {
+  const types = ['person','evidence','location','document','event'];
+  const names = { person:['Unknown Contact','New Suspect','Witness X'], evidence:['New Sample','Item Recovered'], location:['New Site','Unknown Location'], document:['New Document','Filed Report'], event:['New Event','Incident Logged'] };
+  const t = types[Math.floor(Math.random()*types.length)], nl = names[t], label = nl[Math.floor(Math.random()*nl.length)] + ' ' + (GRAPH_NODES.length+1), id = 'gn' + Date.now().toString().slice(-4), W = document.getElementById('graph-svg').parentElement.offsetWidth;
+  GRAPH_NODES.push({ id, label, type:t, x:W/2+Math.random()*180-90, y:300+Math.random()*180-90, vx:0, vy:0 });
+  const target = GRAPH_NODES[Math.floor(Math.random()*(GRAPH_NODES.length-1))];
+  GRAPH_EDGES.push([id, target.id]);
+  graphInited = false; requestAnimationFrame(initGraph);
+  document.getElementById('g-node-count').textContent = GRAPH_NODES.length; document.getElementById('g-edge-count').textContent = GRAPH_EDGES.length;
+  showToast('New node added to graph!', 'success');
+}
+
+function showGraphTooltip(e, node, svg) {
+  const tt = document.getElementById('graph-tooltip'), conns = GRAPH_EDGES.filter(([s,t]) => s===node.id||t===node.id).length;
+  tt.innerHTML = `<div class="graph-tooltip-name">${node.label}</div><div class="graph-tooltip-type">${node.type.charAt(0).toUpperCase()+node.type.slice(1)}</div><div class="graph-tooltip-conns">⟶ ${conns} connection${conns!==1?'s':''}</div>`;
+  const cr = document.getElementById('graph-container').getBoundingClientRect();
+  tt.style.left = (e.clientX - cr.left + 14) + 'px'; tt.style.top  = (e.clientY - cr.top  - 10) + 'px';
+  tt.classList.add('visible');
+}
+
+/* =====================================================
+   TIMELINE
+===================================================== */
+function renderTimeline(filter = 'all') {
+  const wrapper = document.getElementById('timeline-wrapper');
+  wrapper.querySelectorAll('.timeline-event').forEach(e => e.remove());
+  const items = filter === 'all' ? APP.timeline : APP.timeline.filter(e => e.cat === filter);
+  const frag = document.createDocumentFragment(); // PERFORMANCE: Use fragment
+  items.forEach((ev, i) => {
+    const meta = CAT_META[ev.cat] || { emoji:'📌', color:'var(--c-accent)' }, smeta = TL_STATUS_META[ev.status] || TL_STATUS_META.pending;
+    const el = document.createElement('div'); el.className = 'timeline-event'; el.style.animationDelay = (i * .07) + 's';
+    el.innerHTML = `<div class="timeline-dot" style="background:${meta.color}22;color:${meta.color};border-color:${meta.color}">${meta.emoji}</div><div class="timeline-card"><div class="timeline-card-top"><div class="timeline-card-title">${ev.title}</div><div class="timeline-card-date">${ev.date}</div></div><div class="timeline-card-desc">${ev.desc}</div><div class="timeline-card-badges"><span class="badge" style="background:${meta.color}18;color:${meta.color};border-color:${meta.color}44">${ev.cat}</span><span class="badge" style="background:${smeta.color}18;color:${smeta.color};border-color:${smeta.color}44">${smeta.label}</span></div><div class="timeline-status-line" style="background:${smeta.color}"></div></div>`;
+    frag.appendChild(el);
+  });
+  wrapper.appendChild(frag);
+}
+
+function filterTimeline(el, cat) { document.querySelectorAll('#tl-filters .chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); requestAnimationFrame(() => renderTimeline(cat)); }
+
+function submitNewEvent() {
+  const title = document.getElementById('et-title').value.trim(); if (!title) { showToast('Please enter an event title.', 'error'); return; }
+  const date = document.getElementById('et-date').value || new Date().toISOString().split('T')[0], cat = document.getElementById('et-cat').value, desc = document.getElementById('et-desc').value || 'No details provided.';
+  APP.timeline.push({ id:'TL'+Date.now(), title, date, cat, desc, status:'pending' }); APP.timeline.sort((a,b) => a.date.localeCompare(b.date));
+  requestAnimationFrame(renderTimeline); closeModal('modal-new-event'); showToast('Timeline event added!', 'success'); addActivity(`Timeline: ${title}`, '📅');
+  ['et-title','et-desc','et-date'].forEach(i => document.getElementById(i).value='');
+}
+
+/* =====================================================
+   REPORTS
+===================================================== */
+function renderReports() {
+  const reportData = [ { icon:'📄', name:'Operation Shadow Hawk', type:'Case Report', date:'2024-02-10', size:'2.4 MB' }, { icon:'🔬', name:'Forensic Analysis v3.2', type:'Forensic Report', date:'2024-02-08', size:'1.8 MB' }, { icon:'🌐', name:'Interpol Summary', type:'International Report', date:'2024-02-05', size:'960 KB' } ];
+  document.getElementById('report-cards').innerHTML = reportData.map(r => `<div class="report-card"><div class="report-icon">${r.icon}</div><div class="report-name">${r.name}</div><div class="report-meta">${r.type} · ${r.date} · ${r.size}</div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="showToast('Downloading ${r.name}...', 'info')">⬇ Download</button><button class="btn btn-secondary btn-sm" onclick="showToast('Opening ${r.name}...', 'success')">👁 View</button></div></div>`).join('');
+  const statusHtml = { active: `<span class="badge status-active">Active</span>`, open: `<span class="badge status-open">Open</span>`, review: `<span class="badge status-review">Review</span>`, closed: `<span class="badge status-closed">Closed</span>` };
+  document.getElementById('report-table-body').innerHTML = APP.cases.map(c => `<tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--c-text3)">${c.id}</td><td style="font-weight:600">${c.name}</td><td>Agent ${c.agent}</td><td>${statusHtml[c.status] || c.status}</td><td><span class="badge ${PRIORITY_MAP[c.priority]?.cls||''}"> ${PRIORITY_MAP[c.priority]?.label||c.priority}</span></td><td>${c.ev}</td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:72px;height:3px;background:rgba(255,255,255,.07);border-radius:9px;overflow:hidden"><div style="height:100%;width:${c.prog}%;background:linear-gradient(90deg,var(--c-accent),var(--c-accent2))"></div></div><span style="font-size:11px;color:var(--c-text3)">${c.prog}%</span></div></td></tr>`).join('');
+}
+
+function generateReport() { showToast('Generating comprehensive report...', 'info'); setTimeout(() => showToast('Report generated and ready for download!', 'success'), 2000); }
+function exportTable() { showToast('Exporting table to CSV...', 'info'); setTimeout(() => showToast('CSV export complete!', 'success'), 1500); }
+
+/* =====================================================
+   ACTIVITY FEED
+===================================================== */
+function addActivity(text, icon='📌') {
+  const feed = document.getElementById('activity-feed'); if (!feed) return;
+  const item = document.createElement('div'); item.className = 'activity-item'; item.style.animation = 'fadeInUp .3s ease';
+  item.innerHTML = `<div class="activity-icon" style="background:var(--c-accent-dim);color:var(--c-accent)">${icon}</div><div><div class="activity-text">${text}</div><div class="activity-time">Just now</div></div>`;
+  feed.insertBefore(item, feed.firstChild); if (feed.children.length > 8) feed.lastChild.remove();
+}
+
+/* =====================================================
+   GLOBAL SEARCH (DEBOUNCED)
+===================================================== */
+const SEARCH_DB = [
+  ...(() => APP.evidence.map(e => ({ label: e.title, sub: e.type+' · '+e.caseId, icon: TYPE_META[e.type]?.emoji||'📌', view:'evidence' })))(),
+  ...(() => APP.cases.map(c => ({ label: c.name, sub: 'Case · '+c.id, icon:'📁', view:'cases' })))(),
+  ...(() => APP.timeline.map(t => ({ label: t.title, sub: 'Timeline · '+t.date, icon:'📅', view:'timeline' })))(),
+];
+
+// PERFORMANCE: Debounce search to prevent UI stutters on keypress
+let searchDebounce;
+function globalSearch(q) {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    requestAnimationFrame(() => {
+      const drop = document.getElementById('search-dropdown');
+      if (!q.trim()) { drop.style.display='none'; return; }
+      const results = SEARCH_DB.filter(r => r.label.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+      if (!results.length) { drop.style.display='none'; return; }
+      drop.style.display = 'block';
+      drop.innerHTML = results.map((r, i) => `<div class="search-result-item" onclick="searchGo('${r.view}')"><div class="search-result-icon">${r.icon}</div><div><div class="search-result-name">${r.label}</div><div class="search-result-sub">${r.sub}</div></div></div>`).join('');
+    });
+  }, 160);
+}
+
+function searchGo(view) { const navEl = document.getElementById('nav-'+view); showView(view, navEl); closeSearch(); }
+function closeSearch() { document.getElementById('search-dropdown').style.display = 'none'; document.getElementById('global-search').value = ''; }
+
+/* =====================================================
+   INITIALIZATION
+===================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  initDashboard();
+  renderBoard();
+  renderKanban();
+  renderTimeline();
+  const today = new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type="date"]').forEach(i => i.setAttribute('max', '2025-12-31'));
+});
+</script>
+</body>
+</html>
